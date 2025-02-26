@@ -24,7 +24,7 @@ name: SonarQube Scan
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
       - main
@@ -37,6 +37,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up JDK (Required for SonarQube Scanner)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Cache SonarQube Scanner
         uses: actions/cache@v4
@@ -56,5 +62,11 @@ jobs:
 
       - name: Run SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
-          args: ""
+          args: >
+            -Dsonar.projectKey=my_project_key
+            -Dsonar.organization=my_organization
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
