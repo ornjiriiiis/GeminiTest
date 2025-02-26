@@ -1,21 +1,60 @@
-name: SonarCloud workflow
+# name: SonarCloud workflow
+# on:
+#   push:
+#     branches:
+#       - master
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+# jobs:
+#   sonarqube:
+#     name: SonarQube
+#     runs-on: macos-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+#       - name: SonarQube Scan
+#         uses: SonarSource/sonarqube-scan-action@v4
+#         env: 
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+name: SonarQube Scan
+
 on:
   push:
     branches:
       - master
   pull_request:
-    types: [opened, synchronize, reopened]
-jobs:
-  sonarqube:
-    name: SonarQube
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
-        env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    branches:
+      - main
 
+jobs:
+  sonar:
+    name: SonarQube Scan
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache SonarQube Scanner
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar
+          key: sonar-scanner-cli-6.2.1.4610-macOS-ARM64
+          restore-keys: sonar-scanner-cli-
+
+      - name: Install SonarQube Scanner
+        run: |
+          mkdir -p $RUNNER_TEMP/sonarscanner
+          cd $RUNNER_TEMP/sonarscanner
+          wget --no-verbose --user-agent=sonarqube-scan-action https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-6.2.1.4610-macosx-aarch64.zip
+          unzip -q -o sonar-scanner-cli-6.2.1.4610-macosx-aarch64.zip
+          mv sonar-scanner-6.2.1.4610-macosx-aarch64 $RUNNER_TEMP/sonar-scanner-cli-6.2.1.4610-macOS-ARM64
+          echo "$RUNNER_TEMP/sonar-scanner-cli-6.2.1.4610-macOS-ARM64/bin" >> $GITHUB_PATH
+
+      - name: Run SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          args: ""
